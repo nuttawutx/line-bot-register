@@ -48,7 +48,7 @@ def callback():
     # เพิ่มตัวแปร FLAG สำหรับเปิด/ปิดระบบ และจัดการข้อความตอบกลับหากระบบถูกปิดชั่วคราว
 closed_mode_code = ""\
     # เพิ่ม ENV สำหรับเปิด/ปิดระบบ
-SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "true").lower() == "true"
+SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "False").lower() == "False"
 
 
 @handler.add(MessageEvent, message=TextMessage)
