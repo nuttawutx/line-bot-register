@@ -108,7 +108,7 @@ def handle_message(event):
         branch = data.get("สาขา", "")
         postion = data.get("ตำแหน่ง", "")
         start = data.get("เริ่มงาน", "")
-        emp_type = data.get("ประเภท", "")
+        emp_type = data.get("ประเภท", "").strip().lower()
 
 # เลือก Worksheet และรหัสเริ่มต้นตามประเภท
         if emp_type == "รายวัน":
