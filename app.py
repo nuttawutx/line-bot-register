@@ -32,8 +32,7 @@ if GOOGLE_CREDENTIAL_BASE64:
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
 client = gspread.authorize(creds)
-sheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
-sheet = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
+
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -49,7 +48,7 @@ def callback():
     # เพิ่มตัวแปร FLAG สำหรับเปิด/ปิดระบบ และจัดการข้อความตอบกลับหากระบบถูกปิดชั่วคราว
 closed_mode_code = ""\
     # เพิ่ม ENV สำหรับเปิด/ปิดระบบ
-SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "ture").lower() == "ture"
+SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "true").lower() == "true"
 
 
 @handler.add(MessageEvent, message=TextMessage)
@@ -126,14 +125,14 @@ def handle_message(event):
             return
 
         # รันรหัสพนักงานอัตโนมัติ
-        existing = sheet.get_all_values()
+        existing = worksheet.get_all_values()
         last_row = existing[-1] if len(existing) > 1 else []
         last_code = int(last_row[7]) if len(last_row) >= 8 and last_row[7].isdigit() else default_code
         new_code = last_code + 1
         emp_code = str(new_code)
 
         # บันทึกลง Google Sheet
-        sheet.append_row([name, dept, branch,postion, start, emp_type, user_id, emp_code])
+        worksheet.append_row([name, dept, branch,postion, start, emp_type, user_id, emp_code])
         # ตอบกลับ
         confirmation_text = (
             f"✅ ลงทะเบียนสำเร็จ\n"
