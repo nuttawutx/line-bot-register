@@ -101,8 +101,7 @@ def handle_message(event):
             TextSendMessage(text="❌ รูปแบบวันเริ่มงานไม่ถูกต้อง (ต้องเป็น DD-MM-YYYY)")
         )
         return
-
-
+    
     try:
         name = data.get("ชื่อ", "")
         dept = data.get("แผนก", "")
@@ -110,6 +109,20 @@ def handle_message(event):
         postion = data.get("ตำแหน่ง", "")
         start = data.get("เริ่มงาน", "")
         emp_type = data.get("ประเภท", "")
+        
+# เลือก Worksheet และรหัสเริ่มต้นตามประเภท
+        if emp_type == "รายวัน":
+            worksheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
+            default_code = 20000
+        elif emp_type == "รายเดือน":
+            worksheet = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
+            default_code = 10000
+        else:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="❌ ประเภทต้องเป็น 'รายวัน' หรือ 'รายเดือน' เท่านั้น")
+            )
+            return
 
         # รันรหัสพนักงานอัตโนมัติ
         existing = sheet.get_all_values()
