@@ -80,7 +80,7 @@ def handle_message(event):
         )
         return
 
-    if not re.match(r'^\\d{2}-\\d{2}-\\d{4}$', data["เริ่มงาน"]):
+    if not re.match(r'^\d{1,2}-\d{1,2}-\d{4}$', data["เริ่มงาน"]):
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="❌ รูปแบบวันเริ่มงานไม่ถูกต้อง (ต้องเป็น DD-MM-YYYY)")
