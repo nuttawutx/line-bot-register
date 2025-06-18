@@ -50,14 +50,14 @@ def handle_message(event):
     user_id = event.source.user_id
 
     # ตรวจว่ามี 6 บรรทัดตรงเป๊ะ
-    lines = text.strip().split("\\n")
+    lines = text.strip().splitlines()
     if len(lines) != 6:
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="❌ ต้องกรอกข้อมูล 6 บรรทัดเท่านั้น:\nชื่อ:\nแผนก:\nตำแหน่ง:\nสาขา:\nเริ่มงาน (DD-MM-YYYY):\nประเภท:")
+            TextSendMessage(text="❌ ต้องกรอกข้อมูล 6 บรรทัดเท่านั้น:\nชื่อ:\nแผนก:\nสาขา:\nตำแหน่ง:\nเริ่มงาน (DD-MM-YYYY):\nประเภท:")
         )
         return
-    expected_keys = {"ชื่อ", "แผนก", "ตำแหน่ง", "สาขา", "เริ่มงาน", "ประเภท"}
+    expected_keys = {"ชื่อ", "แผนก", "สาขา", "ตำแหน่ง", "เริ่มงาน", "ประเภท"}
 
     data = {}
     for line in lines:
