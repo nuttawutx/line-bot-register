@@ -62,7 +62,7 @@ def handle_message(event):
         r"^ชื่อ: .+",
         r"^แผนก: .+",
         r"^สาขา: .+",
-        r"^ตำแหน่งงาน: .+",
+        r"^ตำแหน่ง: .+",
         r"^เริ่มงาน: (\\d{2}-\\d{2}-\\d{4})$",
         r"^ประเภท: .+"
     ]
@@ -83,7 +83,7 @@ def handle_message(event):
         name = data.get("ชื่อ", "")
         dept = data.get("แผนก", "")
         branch = data.get("สาขา", "")
-        postion = data.get("ตำแหน่งาน", "")
+        postion = data.get("ตำแหน่ง", "")
         start = data.get("เริ่มงาน", "")
         emp_type = data.get("ประเภท", "")
 
