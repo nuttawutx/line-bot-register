@@ -44,8 +44,23 @@ def callback():
         abort(400)
     return 'OK'
 
+
+    # เพิ่มตัวแปร FLAG สำหรับเปิด/ปิดระบบ และจัดการข้อความตอบกลับหากระบบถูกปิดชั่วคราว
+closed_mode_code = ""\
+    # เพิ่ม ENV สำหรับเปิด/ปิดระบบ
+SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "true").lower() == "true"
+
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+    if not SYSTEM_ACTIVE:
+        # ตอบกลับทันทีถ้าระบบถูกปิด
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="⚠️ ขณะนี้ระบบลงทะเบียนปิดให้บริการชั่วคราว\nโปรดลองใหม่อีกครั้งภายหลัง")
+        )
+        return
+
     text = event.message.text
     user_id = event.source.user_id
 
