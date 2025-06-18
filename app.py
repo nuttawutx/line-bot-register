@@ -31,7 +31,7 @@ if GOOGLE_CREDENTIAL_BASE64:
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
 client = gspread.authorize(creds)
-sheet = client.open("HR_EmployeeList").worksheet("LINE_Register")
+sheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
 
 @app.route("/callback", methods=['POST'])
 def callback():
