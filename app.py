@@ -54,30 +54,39 @@ def handle_message(event):
     if len(lines) != 6:
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="❌ กรุณากรอกข้อมูล 6 บรรทัดให้ครบตามรูปแบบเท่านั้น")
+            TextSendMessage(text="❌ ต้องกรอกข้อมูล 6 บรรทัดเท่านั้น:\nชื่อ:\nแผนก:\nตำแหน่ง:\nสาขา:\nเริ่มงาน (DD-MM-YYYY):\nประเภท:")
         )
         return
-    # ตรวจสอบ pattern ของแต่ละบรรทัด
-    patterns = [
-        r"^ชื่อ: .+",
-        r"^แผนก: .+",
-        r"^สาขา: .+",
-        r"^ตำแหน่ง: .+",
-        r"^เริ่มงาน: (\\d{2}-\\d{2}-\\d{4})$",
-        r"^ประเภท: .+"
-    ]
+    expected_keys = {"ชื่อ", "แผนก", "ตำแหน่ง", "สาขา", "เริ่มงาน", "ประเภท"}
 
     data = {}
-    for i, line in enumerate(lines):
-        match = re.match(patterns[i], line)
-        if not match:
+    for line in lines:
+        if ":" not in line:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text=f"❌ รูปแบบบรรทัดที่ {i+1} ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง")
+                TextSendMessage(text="❌ ทุกบรรทัดต้องมีเครื่องหมาย ':' เช่น ตำแหน่ง: เจ้าหน้าที่")
             )
             return
-            key, val = line.split(":", 1)
-            data[key.strip()] = val.strip()
+        key, val = line.split(":", 1)
+        key = key.strip()
+        val = val.strip()
+        data[key] = val
+
+    if set(data.keys()) != expected_keys:
+        missing = expected_keys - set(data.keys())
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=f"❌ ขาดข้อมูล: {', '.join(missing)}")
+        )
+        return
+
+    if not re.match(r'^\\d{2}-\\d{2}-\\d{4}$', data["เริ่มงาน"]):
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="❌ รูปแบบวันเริ่มงานไม่ถูกต้อง (ต้องเป็น DD-MM-YYYY)")
+        )
+        return
+
 
     try:
         name = data.get("ชื่อ", "")
