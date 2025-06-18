@@ -115,7 +115,7 @@ def handle_message(event):
             worksheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
             default_code = 90000
         elif emp_type == "รายเดือน":
-            worksheet = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
+            worksheet1 = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
             default_code = 20000
         else:
             line_bot_api.reply_message(
@@ -130,6 +130,14 @@ def handle_message(event):
         last_code = int(last_row[7]) if len(last_row) >= 8 and last_row[7].isdigit() else default_code
         new_code = last_code + 1
         emp_code = str(new_code)
+
+                # รันรหัสพนักงานอัตโนมัติ
+        existing = worksheet1.get_all_values()
+        last_row = existing[-1] if len(existing) > 1 else []
+        last_code = int(last_row[7]) if len(last_row) >= 8 and last_row[7].isdigit() else default_code
+        new_code = last_code + 1
+        emp_code = str(new_code)
+
 
         # บันทึกลง Google Sheet
         worksheet.append_row([name, dept, branch,postion, start, emp_type, user_id, emp_code])
