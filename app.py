@@ -49,7 +49,7 @@ def handle_message(event):
     text = event.message.text
     user_id = event.source.user_id
 
-    # ตรวจว่ามี 5 บรรทัดตรงเป๊ะ
+    # ตรวจว่ามี 6 บรรทัดตรงเป๊ะ
     lines = text.strip().split("\\n")
     if len(lines) != 6:
         line_bot_api.reply_message(
