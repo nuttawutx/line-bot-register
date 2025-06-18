@@ -113,10 +113,10 @@ def handle_message(event):
 # เลือก Worksheet และรหัสเริ่มต้นตามประเภท
         if emp_type == "รายวัน":
             worksheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
-            default_code = 20000
+            default_code = 90000
         elif emp_type == "รายเดือน":
             worksheet = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
-            default_code = 10000
+            default_code = 20000
         else:
             line_bot_api.reply_message(
                 event.reply_token,
