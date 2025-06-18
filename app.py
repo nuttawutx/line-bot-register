@@ -51,7 +51,7 @@ def handle_message(event):
 
     # ตรวจว่ามี 5 บรรทัดตรงเป๊ะ
     lines = text.strip().split("\\n")
-    if len(lines) != 5:
+    if len(lines) != 6:
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="❌ กรุณากรอกข้อมูล 6 บรรทัดให้ครบตามรูปแบบเท่านั้น")
