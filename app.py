@@ -1,6 +1,7 @@
 import os
 import json
 import base64
+import re
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -48,10 +49,33 @@ def handle_message(event):
     text = event.message.text
     user_id = event.source.user_id
 
-    lines = text.strip().split("\n")
+    # ตรวจว่ามี 5 บรรทัดตรงเป๊ะ
+    lines = text.strip().split("\\n")
+    if len(lines) != 5:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="❌ กรุณากรอกข้อมูล 6 บรรทัดให้ครบตามรูปแบบเท่านั้น")
+        )
+        return
+    # ตรวจสอบ pattern ของแต่ละบรรทัด
+    patterns = [
+        r"^ชื่อ: .+",
+        r"^แผนก: .+",
+        r"^สาขา: .+",
+        r"^ตำแหน่งงาน: .+",
+        r"^เริ่มงาน: (\\d{2}-\\d{2}-\\d{4})$",
+        r"^ประเภท: .+"
+    ]
+
     data = {}
-    for line in lines:
-        if ":" in line:
+    for i, line in enumerate(lines):
+        match = re.match(patterns[i], line)
+        if not match:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text=f"❌ รูปแบบบรรทัดที่ {i+1} ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง")
+            )
+            return
             key, val = line.split(":", 1)
             data[key.strip()] = val.strip()
 
@@ -59,6 +83,7 @@ def handle_message(event):
         name = data.get("ชื่อ", "")
         dept = data.get("แผนก", "")
         branch = data.get("สาขา", "")
+        postion = data.get("ตำแหน่งาน", "")
         start = data.get("เริ่มงาน", "")
         emp_type = data.get("ประเภท", "")
 
@@ -70,34 +95,22 @@ def handle_message(event):
         emp_code = str(new_code)
 
         # บันทึกลง Google Sheet
-        sheet.append_row([name, dept, branch, start, emp_type, user_id, emp_code])
-
-        # Flex Message
-        flex = {
-            "type": "bubble",
-            "body": {
-                "type": "box",
-                "layout": "vertical",
-                "spacing": "sm",
-                "contents": [
-                    { "type": "text", "text": "ลงทะเบียนสำเร็จ 🎉", "weight": "bold", "size": "lg", "color": "#1DB446" },
-                    { "type": "separator", "margin": "md" },
-                    { "type": "text", "text": f"ชื่อ: {name}", "size": "md" },
-                    { "type": "text", "text": f"รหัสพนักงาน: {emp_code}", "size": "md" },
-                    { "type": "text", "text": f"แผนก: {dept}", "size": "sm", "color": "#888888" },
-                    { "type": "text", "text": f"สาขา: {branch}", "size": "sm", "color": "#888888" },
-                    { "type": "text", "text": f"เริ่มงาน: {start}", "size": "sm", "color": "#888888" },
-                ]
-            }
-        }
-
+        sheet.append_row([name, dept, branch,postion, start, emp_type, user_id, emp_code])
+        # ตอบกลับ
+        confirmation_text = (
+            f"✅ ลงทะเบียนสำเร็จ\n"
+            f"รหัสพนักงาน: {emp_code}\n"
+            f"ชื่อ: {name}\n"
+            f"ตำแหน่งงาน: {postion}\n"
+            f"สาขา: {branch}\n"
+            f"วันเริ่มงาน: {start}\n"
+            f"📌 โปรดแจ้งหัวหน้างานล่วงหน้าก่อนเริ่มงาน"
+        )
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="ลงทะเบียนสำเร็จ!")
+            TextSendMessage(text=confirmation_text)
         )
-        line_bot_api.push_message(user_id, TextSendMessage(text="⬇️ ดูรายละเอียดด้านล่าง"))
-        line_bot_api.push_message(user_id, FlexSendMessage(alt_text="ลงทะเบียนสำเร็จ", contents=flex))
-
+        
     except Exception as e:
         line_bot_api.reply_message(
             event.reply_token,
