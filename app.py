@@ -48,7 +48,7 @@ def callback():
     # เพิ่มตัวแปร FLAG สำหรับเปิด/ปิดระบบ และจัดการข้อความตอบกลับหากระบบถูกปิดชั่วคราว
 closed_mode_code = ""\
     # เพิ่ม ENV สำหรับเปิด/ปิดระบบ
-SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "false").lower() == "false"
+SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "ture").lower() == "ture"
 
 
 @handler.add(MessageEvent, message=TextMessage)
@@ -109,7 +109,7 @@ def handle_message(event):
         postion = data.get("ตำแหน่ง", "")
         start = data.get("เริ่มงาน", "")
         emp_type = data.get("ประเภท", "")
-        
+
 # เลือก Worksheet และรหัสเริ่มต้นตามประเภท
         if emp_type == "รายวัน":
             worksheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
