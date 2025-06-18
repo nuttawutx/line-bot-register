@@ -99,7 +99,7 @@ def handle_message(event):
         # รันรหัสพนักงานอัตโนมัติ
         existing = sheet.get_all_values()
         last_row = existing[-1] if len(existing) > 1 else []
-        last_code = int(last_row[6]) if len(last_row) >= 7 and last_row[6].isdigit() else 20000
+        last_code = int(last_row[7]) if len(last_row) >= 8 and last_row[7].isdigit() else 20000
         new_code = last_code + 1
         emp_code = str(new_code)
 
