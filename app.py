@@ -32,7 +32,7 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
 client = gspread.authorize(creds)
 
-user_state = {}  # เก็บสถานะของผู้ใช้
+user_state = {}
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -80,7 +80,7 @@ def handle_message(event):
         else:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="กรุณาเลือกเมนูโดยพิมพ์หมายเลข:\n1 → ลงทะเบียนพนักงานใหม่\n2 → เปลี่ยนประเภทและรหัสพนักงาน\n เลือก หมายเลขผิด ให้พิม'ยกเลิก' ")
+                TextSendMessage(text="กรุณาเลือกเมนูโดยพิมพ์หมายเลข:\n1 → ลงทะเบียนพนักงานใหม่\n2 → เปลี่ยนประเภทและรหัสพนักงาน\nเลือก หมายเลขผิด ให้พิม'ยกเลิก' ")
             )
             return
 
@@ -158,6 +158,20 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="❌ ขาดข้อมูล"))
             return
 
+        old_code = data["รหัสพนักงานเดิม"]
+        old_start_date = "-"
+
+        # ค้นหารหัสเดิมจากทั้งสอง worksheet
+        for sheet_name in ["DailyEmployee", "MonthlyEmployee"]:
+            sheet = client.open("HR_EmployeeList").worksheet(sheet_name)
+            values = sheet.get_all_values()
+            for row in values:
+                if len(row) >= 8 and row[7] == old_code:
+                    old_start_date = row[4]  # index เริ่มงาน
+                    break
+            if old_start_date != "-":
+                break
+
         new_type = data["ประเภทใหม่"].lower()
         if new_type == "รายวัน":
             worksheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
@@ -184,11 +198,11 @@ def handle_message(event):
         history_sheet = client.open("HR_EmployeeList").worksheet("TransferHistory")
         history_sheet.append_row([
             data["ชื่อ"], data["รหัสพนักงานเดิม"], new_code,
-            data["ประเภทใหม่"], data["วันที่มีผล"], user_id, now
+            data["ประเภทใหม่"], data["วันที่มีผล"], old_start_date, user_id, now
         ])
 
         line_bot_api.reply_message(event.reply_token, TextSendMessage(
-            text=f"🔄 ปรับประเภทสำเร็จ\nรหัสใหม่: {new_code}\n📌 บันทึกในประวัติการโอนย้าย"))
+            text=f"🔄 ปรับประเภทสำเร็จ\nรหัสใหม่: {new_code}\nเริ่มงานเดิม: {old_start_date}\n📌 บันทึกในประวัติการโอนย้าย"))
         del user_state[user_id]
 
 if __name__ == "__main__":
