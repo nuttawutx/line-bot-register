@@ -82,7 +82,7 @@ def handle_message(event):
         else:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="กรุณาเลือกเมนูโดยพิมพ์หมายเลข:\n1 → ลงทะเบียนพนักงานใหม่\n2 → เปลี่ยนประเภทและรหัสพนักงาน")
+                TextSendMessage(text="กรุณาเลือกเมนูโดยพิมพ์หมายเลข:\n1 → ลงทะเบียนพนักงานใหม่\n2 → เปลี่ยนประเภทและรหัสพนักงาน\n เลือก หมายเลขผิด ให้พิม'ยกเลิก' ")
             )
             return
 
