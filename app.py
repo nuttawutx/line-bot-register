@@ -9,6 +9,9 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage, FlexSendM
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from dotenv import load_dotenv
+from datetime import datetime
+import pytz
+
 
 load_dotenv()
 
@@ -131,8 +134,11 @@ def handle_message(event):
         new_code = last_code + 1
         emp_code = str(new_code)
 
+        tz = pytz.timezone('Asia/Bangkok')
+        now = datetime.now(tz).strftime("%d/%m/%Y %H:%M")
+
         # บันทึกลง Google Sheet
-        worksheet.append_row([name, dept, branch,postion, start, emp_type, user_id, emp_code])
+        worksheet.append_row([name, dept, branch,postion, start, emp_type, user_id, emp_code,now])
         # ตอบกลับ
         confirmation_text = (
             f"✅ ลงทะเบียนสำเร็จ\n"
