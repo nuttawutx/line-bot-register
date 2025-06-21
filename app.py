@@ -133,7 +133,8 @@ def handle_message(event):
         last_code = int(last_row[7]) if len(last_row) >= 8 and last_row[7].isdigit() else default_code
         new_code = last_code + 1
         emp_code = str(new_code)
-
+        
+        # This is a test update for timestamp logging
         tz = pytz.timezone('Asia/Bangkok')
         now = datetime.now(tz).strftime("%d/%m/%Y %H:%M")
 
