@@ -134,7 +134,7 @@ def handle_message(event):
         new_code = last_code + 1
         emp_code = str(new_code)
         
-        # This is a test update for timestamp logging
+       
         tz = pytz.timezone('Asia/Bangkok')
         now = datetime.now(tz).strftime("%d/%m/%Y %H:%M")
 
