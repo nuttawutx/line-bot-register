@@ -17,7 +17,6 @@ load_dotenv()
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 GOOGLE_CREDENTIAL_BASE64 = os.getenv("GOOGLE_CREDENTIAL_BASE64")
-SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "true").lower() == "true"
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -32,7 +31,8 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
 client = gspread.authorize(creds)
 
-user_state = {}
+SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "true").lower() == "true"
+user_states = {}
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -49,124 +49,154 @@ def handle_message(event):
     if not SYSTEM_ACTIVE:
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="⚠️ ระบบปิดให้บริการชั่วคราว")
+            TextSendMessage(text="⚠️ ขณะนี้ระบบลงทะเบียนปิดให้บริการชั่วคราว\nโปรดลองใหม่อีกครั้งภายหลัง")
         )
         return
 
-    user_id = event.source.user_id
     text = event.message.text.strip()
+    user_id = event.source.user_id
 
-    if user_id not in user_state:
+    if user_id not in user_states:
         if text == "1":
-            user_state[user_id] = "registering"
+            user_states[user_id] = "register"
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="กรุณากรอกข้อมูล:\nชื่อ:\nแผนก:\nสาขา:\nตำแหน่ง:\nเริ่มงาน: (DD-MM-YYYY)\nประเภท:")
+                TextSendMessage(text="กรุณากรอกข้อมูล 6 บรรทัดตามนี้:\nชื่อ:\nแผนก:\nสาขา:\nตำแหน่ง:\nเริ่มงาน (DD-MM-YYYY):\nประเภท: รายวัน หรือ รายเดือน")
             )
+            return
         elif text == "2":
-            user_state[user_id] = "transferring"
+            user_states[user_id] = "change_type"
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="กรุณากรอกข้อมูลเปลี่ยนประเภท:\nชื่อ:\nตำแหน่ง:\nประเภทใหม่:\nวันมีผล:(DD-MM-YYYY)")
+                TextSendMessage(text="กรุณากรอกข้อมูล 4 บรรทัดตามนี้:\nรหัสพนักงานเดิม:\nชื่อ:\nประเภทเดิม:\nประเภทใหม่:")
             )
+            return
         else:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="กรุณาพิมพ์ 1 หรือ 2 เท่านั้น:\n1 → ลงทะเบียนรหัสใหม่\n2 → เปลี่ยนประเภทและรหัสพนักงาน")
+                TextSendMessage(text="กรุณาพิมพ์ 1 เพื่อลงทะเบียนใหม่ หรือ 2 เพื่อเปลี่ยนประเภท")
             )
-        return
+            return
 
-    state = user_state[user_id]
-    lines = text.splitlines()
-    tz = pytz.timezone('Asia/Bangkok')
-    now = datetime.now(tz).strftime("%d/%m/%Y %H:%M")
+    state = user_states[user_id]
 
-    if state == "registering" and len(lines) == 6:
+    if state == "register":
+        lines = text.splitlines()
+        if len(lines) != 6:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="❌ ต้องกรอกข้อมูล 6 บรรทัดให้ครบถ้วน")
+            )
+            return
+
+        keys = ["ชื่อ", "แผนก", "สาขา", "ตำแหน่ง", "เริ่มงาน", "ประเภท"]
         data = {}
         for line in lines:
-            if ':' not in line: continue
-            key, val = line.split(':', 1)
+            if ":" not in line:
+                continue
+            key, val = line.split(":", 1)
             data[key.strip()] = val.strip()
 
-        if not re.match(r'\d{1,2}-\d{1,2}-\d{4}', data.get("เริ่มงาน", "")):
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="❌ รูปแบบวันเริ่มงานไม่ถูกต้อง"))
+        if set(data.keys()) != set(keys):
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="❌ ข้อมูลไม่ครบหรือพิมพ์ผิด โปรดตรวจสอบอีกครั้ง")
+            )
             return
 
-        emp_type = data.get("ประเภท", "").strip().lower()
+        emp_type = data["ประเภท"].strip().lower()
         if emp_type == "รายวัน":
-            worksheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
+            sheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
             default_code = 90000
         elif emp_type == "รายเดือน":
-            worksheet = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
+            sheet = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
             default_code = 20000
         else:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="❌ ประเภทไม่ถูกต้อง"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="❌ ประเภทต้องเป็น 'รายวัน' หรือ 'รายเดือน'"))
             return
 
-        existing = worksheet.get_all_values()
+        existing = sheet.get_all_values()
         last_row = existing[-1] if len(existing) > 1 else []
         last_code = int(last_row[7]) if len(last_row) >= 8 and last_row[7].isdigit() else default_code
         new_code = str(last_code + 1)
 
-        worksheet.append_row([
-            data.get("ชื่อ", ""), data.get("แผนก", ""), data.get("สาขา", ""),
-            data.get("ตำแหน่ง", ""), data.get("เริ่มงาน", ""), emp_type,
-            user_id, new_code, now
+        tz = pytz.timezone('Asia/Bangkok')
+        now = datetime.now(tz).strftime("%d/%m/%Y %H:%M")
+
+        sheet.append_row([
+            data["ชื่อ"], data["แผนก"], data["สาขา"], data["ตำแหน่ง"],
+            data["เริ่มงาน"], emp_type, user_id, new_code, now
         ])
 
         line_bot_api.reply_message(event.reply_token, TextSendMessage(
-            text=f"✅ ลงทะเบียนสำเร็จ\nรหัสพนักงาน: {new_code}\nชื่อ: {data['ชื่อ']}\nตำแหน่ง: {data['ตำแหน่ง']}\nประเภท: {emp_type}"
+            text=f"✅ ลงทะเบียนสำเร็จ\nรหัสพนักงาน: {new_code}\nชื่อ: {data['ชื่อ']}\nประเภท: {emp_type}\n⏰ {now}"
         ))
-        user_state.pop(user_id, None)
+        user_states.pop(user_id)
 
-    elif state == "transferring" and len(lines) == 4:
-        data = {}
-        for line in lines:
-            if ':' not in line: continue
-            key, val = line.split(':', 1)
-            data[key.strip()] = val.strip()
-
-        emp_name = data.get("ชื่อ", "")
-        new_type = data.get("ประเภทใหม่", "").strip().lower()
-        if not re.match(r'\d{1,2}-\d{1,2}-\d{4}', data.get("วันมีผล", "")):
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="❌ วันมีผลไม่ถูกต้อง"))
+    elif state == "change_type":
+        lines = text.splitlines()
+        if len(lines) != 4:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="❌ ต้องกรอกข้อมูล 4 บรรทัดให้ครบถ้วน")
+            )
             return
 
-        old_sheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
-        new_sheet = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
+        keys = ["รหัสพนักงานเดิม", "ชื่อ", "ประเภทเดิม", "ประเภทใหม่"]
+        data = {}
+        for line in lines:
+            if ":" not in line:
+                continue
+            key, val = line.split(":", 1)
+            data[key.strip()] = val.strip()
+
+        if set(data.keys()) != set(keys):
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                text="❌ ข้อมูลไม่ครบหรือพิมพ์ผิด โปรดตรวจสอบอีกครั้ง"))
+            return
+
+        old_type = data["ประเภทเดิม"].strip().lower()
+        new_type = data["ประเภทใหม่"].strip().lower()
+
+        if old_type == new_type:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                text="❌ ประเภทใหม่ต้องไม่ซ้ำกับประเภทเดิม"))
+            return
+
         if new_type == "รายวัน":
-            old_sheet, new_sheet = new_sheet, old_sheet
+            target_sheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
             default_code = 90000
-        else:
+        elif new_type == "รายเดือน":
+            target_sheet = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
             default_code = 20000
+        else:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                text="❌ ประเภทต้องเป็น 'รายวัน' หรือ 'รายเดือน'"))
+            return
 
-        rows = old_sheet.get_all_values()
-        header, data_rows = rows[0], rows[1:]
-        updated = False
-        for idx, row in enumerate(data_rows, start=2):
-            if row[0] == emp_name:
-                last_row = new_sheet.get_all_values()
-                last_code = int(last_row[-1][7]) if len(last_row) > 1 and last_row[-1][7].isdigit() else default_code
-                new_code = str(last_code + 1)
-                new_data = row[:6] + [user_id, new_code, now]
-                new_data[5] = new_type
-                new_sheet.append_row(new_data)
-                old_sheet.delete_rows(idx)
-                trans_sheet = client.open("HR_EmployeeList").worksheet("TransferHistory")
-                trans_sheet.append_row([emp_name, row[5], new_type, data.get("วันมีผล"), now])
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                    text=f"✅ เปลี่ยนประเภทสำเร็จ\nรหัสใหม่: {new_code}\nชื่อ: {emp_name}\nประเภท: {new_type}"
-                ))
-                updated = True
-                break
+        existing = target_sheet.get_all_values()
+        last_row = existing[-1] if len(existing) > 1 else []
+        last_code = int(last_row[7]) if len(last_row) >= 8 and last_row[7].isdigit() else default_code
+        new_emp_code = str(last_code + 1)
 
-        if not updated:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="❌ ไม่พบข้อมูลพนักงาน"))
+        tz = pytz.timezone('Asia/Bangkok')
+        now = datetime.now(tz).strftime("%d/%m/%Y %H:%M")
 
-        user_state.pop(user_id, None)
+        # เพิ่มข้อมูลใหม่ไปยัง sheet ประเภทใหม่
+        target_sheet.append_row([
+            data["ชื่อ"], "-", "-", "-", now, new_type, user_id, new_emp_code, now
+        ])
 
-    else:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="❌ รูปแบบข้อมูลไม่ถูกต้อง"))
+        # บันทึกประวัติลง TransferHistory
+        transfer_sheet = client.open("HR_EmployeeList").worksheet("TransferHistory")
+        transfer_sheet.append_row([
+            data["ชื่อ"], data["รหัสพนักงานเดิม"], old_type, new_type, new_emp_code, now
+        ])
+
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(
+            text=f"✅ ปรับประเภทสำเร็จ\nรหัสใหม่: {new_emp_code}\nประเภทใหม่: {new_type}\n⏰ {now}"
+        ))
+        user_states.pop(user_id)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
