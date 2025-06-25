@@ -160,6 +160,8 @@ def handle_message(event):
 
         old_code = data["รหัสพนักงานเดิม"]
         old_start_date = "-"
+        old_position = "-"
+        old_type = "-"
 
         # ค้นหารหัสเดิมจากทั้งสอง worksheet
         for sheet_name in ["DailyEmployee", "MonthlyEmployee"]:
@@ -168,6 +170,8 @@ def handle_message(event):
             for row in values:
                 if len(row) >= 8 and row[7] == old_code:
                     old_start_date = row[4]  # index เริ่มงาน
+                    old_position = row[3]    # index 
+                    old_type = row[5]        # ประเภทเดิม
                     break
             if old_start_date != "-":
                 break
@@ -197,12 +201,12 @@ def handle_message(event):
 
         history_sheet = client.open("HR_EmployeeList").worksheet("TransferHistory")
         history_sheet.append_row([
-            data["ชื่อ"], data["รหัสพนักงานเดิม"], new_code,
-            data["ประเภทใหม่"], data["วันที่มีผล"], old_start_date, user_id, now
+            now,data["รหัสพนักงานเดิม"], new_code,data["ชื่อ"],data["วันที่มีผล"],
+            old_position,data["ตำแหน่งใหม่"],old_type,data["ประเภทใหม่"],user_id
         ])
 
         line_bot_api.reply_message(event.reply_token, TextSendMessage(
-            text=f"🔄 ปรับประเภทสำเร็จ\nรหัสใหม่: {new_code}\nเริ่มงานเดิม: {old_start_date}\n📌 บันทึกในประวัติการโอนย้าย"))
+            text=f"🔄 ปรับประเภทสำเร็จ\nรหัสใหม่: {new_code}\nชื่อ:{data["ชื่อ"]}\nตำแหน่งเดิม: {old_position}\nตำแหน่งานใหม่: {data["ตำแหน่งใหม่"]}\n วันที่มีผล: {data["วันที่มีผล"]}\n📌 บันทึกในประวัติการโอนย้าย"))
         del user_state[user_id]
 
 if __name__ == "__main__":
