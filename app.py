@@ -206,7 +206,7 @@ def handle_message(event):
         ])
 
         line_bot_api.reply_message(event.reply_token, TextSendMessage(
-            text=f"🔄 ปรับประเภทสำเร็จ\nรหัสใหม่: {new_code}\nชื่อ:{data["ชื่อ"]}\nตำแหน่งเดิม: {old_position}\nตำแหน่งานใหม่: {data["ตำแหน่งใหม่"]}\n วันที่มีผล: {data["วันที่มีผล"]}\n📌 บันทึกในประวัติการโอนย้าย"))
+            text=f"🔄 ปรับประเภทสำเร็จ\nรหัสใหม่: {new_code}\nชื่อ:{data["ชื่อ"]}\nตำแหน่งเดิม: {old_position}\nตำแหน่งใหม่: {data["ตำแหน่งใหม่"]}\n วันที่มีผล: {data["วันที่มีผล"]}\n📌 บันทึกในประวัติการโอนย้าย"))
         del user_state[user_id]
 
 if __name__ == "__main__":
