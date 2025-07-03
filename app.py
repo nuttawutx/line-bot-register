@@ -11,7 +11,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 from dotenv import load_dotenv
 from datetime import datetime
 import pytz
-import requests
 
 
 load_dotenv()
@@ -131,7 +130,7 @@ def handle_message(event):
         if webhook_url:
             try:
                 sheet_name = worksheet.title  # เช่น "DailyEmployee"
-                r = requests.post(webhook_url, json={"sheet": "DailyEmployee"})
+                r = requests.post(webhook_url, json={"sheet": sheet_name})
                 
                 print("Webhook Response:", r.text)
             except Exception as e:
