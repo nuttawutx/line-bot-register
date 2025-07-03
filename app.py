@@ -131,6 +131,9 @@ def handle_message(event):
             try:
                 sheet_name = worksheet.title  # เช่น "DailyEmployee"
                 r = requests.post(webhook_url, json={"sheet": sheet_name})
+                print("📨 Status Code:", r.status_code)
+                print("📨 Webhook Response:", r.text)
+
                 print("Webhook Response:", r.text)
             except Exception as e:
                 print("Webhook Error:", e)
