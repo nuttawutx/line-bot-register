@@ -5,23 +5,18 @@ import re
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage, FlexSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from dotenv import load_dotenv
 from datetime import datetime
 import pytz
 
-
 load_dotenv()
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 GOOGLE_CREDENTIAL_BASE64 = os.getenv("GOOGLE_CREDENTIAL_BASE64")
-
-print("DEBUG: TOKEN =", LINE_CHANNEL_ACCESS_TOKEN)
-print("DEBUG: SECRET =", LINE_CHANNEL_SECRET)
-print("DEBUG: BASE64 =", GOOGLE_CREDENTIAL_BASE64 is not None)
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -36,7 +31,6 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
 client = gspread.authorize(creds)
 
-
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
@@ -47,17 +41,11 @@ def callback():
         abort(400)
     return 'OK'
 
-
-    # เพิ่มตัวแปร FLAG สำหรับเปิด/ปิดระบบ และจัดการข้อความตอบกลับหากระบบถูกปิดชั่วคราว
-closed_mode_code = ""\
-    # เพิ่ม ENV สำหรับเปิด/ปิดระบบ
 SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "true").lower() == "true"
-
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     if not SYSTEM_ACTIVE:
-        # ตอบกลับทันทีถ้าระบบถูกปิด
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="⚠️ ขณะนี้ระบบลงทะเบียนปิดให้บริการชั่วคราว\nโปรดลองใหม่อีกครั้งภายหลัง")
@@ -67,7 +55,6 @@ def handle_message(event):
     text = event.message.text
     user_id = event.source.user_id
 
-    # ตรวจว่ามี 6 บรรทัดตรงเป๊ะ
     lines = text.strip().splitlines()
     if len(lines) != 6:
         line_bot_api.reply_message(
@@ -75,8 +62,8 @@ def handle_message(event):
             TextSendMessage(text="❌ ต้องกรอกข้อมูล 6 บรรทัดเท่านั้น:\nชื่อ:\nชื่อเล่น:\nสาขา:\nตำแหน่ง:\nเริ่มงาน (DD-MM-YYYY):\nประเภท:")
         )
         return
-    expected_keys = {"ชื่อ", "สาขา","ชื่อเล่น", "ตำแหน่ง", "เริ่มงาน", "ประเภท"}
 
+    expected_keys = {"ชื่อ", "ชื่อเล่น", "สาขา", "ตำแหน่ง", "เริ่มงาน", "ประเภท"}
     data = {}
     for line in lines:
         if ":" not in line:
@@ -86,9 +73,7 @@ def handle_message(event):
             )
             return
         key, val = line.split(":", 1)
-        key = key.strip()
-        val = val.strip()
-        data[key] = val
+        data[key.strip()] = val.strip()
 
     if set(data.keys()) != expected_keys:
         missing = expected_keys - set(data.keys())
@@ -104,7 +89,7 @@ def handle_message(event):
             TextSendMessage(text="❌ รูปแบบวันเริ่มงานไม่ถูกต้อง (ต้องเป็น DD-MM-YYYY)")
         )
         return
-    
+
     try:
         name = data.get("ชื่อ", "")
         nickname = data.get("ชื่อเล่น", "")
@@ -113,7 +98,6 @@ def handle_message(event):
         start = data.get("เริ่มงาน", "")
         emp_type = data.get("ประเภท", "").strip().lower()
 
-# เลือก Worksheet และรหัสเริ่มต้นตามประเภท
         if emp_type == "รายวัน":
             worksheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
             default_code = 90000
@@ -127,20 +111,23 @@ def handle_message(event):
             )
             return
 
-        # รันรหัสพนักงานอัตโนมัติ
         existing = worksheet.get_all_values()
         last_row = existing[-1] if len(existing) > 1 else []
         last_code = int(last_row[2]) if len(last_row) >= 3 and last_row[2].isdigit() else default_code
         new_code = last_code + 1
         emp_code = str(new_code)
-        
-        # This is a test update for timestamp logging
+
         tz = pytz.timezone('Asia/Bangkok')
         now = datetime.now(tz).strftime("%d/%m/%Y %H:%M")
 
-        # บันทึกลง Google Sheet
-        worksheet.append_row(["",branch,emp_code,name,nickname,postion, start, emp_type, user_id,now])
-        # ตอบกลับ
+        worksheet.append_row(["", branch, emp_code, name, nickname, postion, start, emp_type, user_id, now])
+
+        # เรียก Apps Script Webhook สำหรับคัดลอกสูตรจากคอลัมน์ 11-14
+        import requests
+        webhook_url = os.getenv("APPS_SCRIPT_WEBHOOK")  # ต้องตั้งค่าตัวแปรนี้ใน .env
+        if webhook_url:
+            requests.post(webhook_url, json={"sheet": worksheet.title})
+
         confirmation_text = (
             f"✅ ลงทะเบียนสำเร็จ\n"
             f"รหัสพนักงาน: {emp_code}\n"
@@ -154,7 +141,7 @@ def handle_message(event):
             event.reply_token,
             TextSendMessage(text=confirmation_text)
         )
-        
+
     except Exception as e:
         line_bot_api.reply_message(
             event.reply_token,
