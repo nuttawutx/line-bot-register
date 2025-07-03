@@ -130,7 +130,7 @@ def handle_message(event):
         # รันรหัสพนักงานอัตโนมัติ
         existing = worksheet.get_all_values()
         last_row = existing[-1] if len(existing) > 1 else []
-        last_code = int(last_row[3]) if len(last_row) >= 4 and last_row[3].isdigit() else default_code
+        last_code = int(last_row[2]) if len(last_row) >= 3 and last_row[2].isdigit() else default_code
         new_code = last_code + 1
         emp_code = str(new_code)
         
