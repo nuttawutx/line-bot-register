@@ -129,9 +129,7 @@ def handle_message(event):
         webhook_url = os.getenv("APPS_SCRIPT_WEBHOOK")
         if webhook_url:
             r = requests.post(webhook_url, json={"sheet": worksheet.title})
-        print("Webhook Response:", r.text)  # ตรวจสอบตรงนี้
-    except Exception as e:
-        print("Webhook Error:", e)
+ 
 
 
         confirmation_text = (
