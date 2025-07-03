@@ -124,16 +124,15 @@ def handle_message(event):
 
         worksheet.append_row(["", branch, emp_code, name, nickname, postion, start, emp_type, user_id, now])
         import requests
+        webhook_url = "https://script.google.com/macros/s/AKfycbwxhG82o8jerATxeuUDY9TT0SKadQE4t6sn7fFyvgdsg6ZTZwKp_EgA06t0_IbFkc2c/exec"
 
 # เรียก Webhook Apps Script
         webhook_url = os.getenv("APPS_SCRIPT_WEBHOOK")
         if webhook_url:
             try:
                 sheet_name = worksheet.title  # เช่น "DailyEmployee"
-                r = requests.post(webhook_url, json={"sheet": sheet_name})
-                print("📨 Status Code:", r.status_code)
-                print("📨 Webhook Response:", r.text)
-
+                r = requests.post(webhook_url, json={"sheet": "DailyEmployee"})
+                
                 print("Webhook Response:", r.text)
             except Exception as e:
                 print("Webhook Error:", e)
