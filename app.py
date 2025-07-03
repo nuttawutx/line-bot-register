@@ -124,7 +124,7 @@ def handle_message(event):
 
         worksheet.append_row(["", branch, emp_code, name, nickname, postion, start, emp_type, user_id, now])
         import requests
-        webhook_url = "https://script.google.com/macros/s/AKfycbwxhG82o8jerATxeuUDY9TT0SKadQE4t6sn7fFyvgdsg6ZTZwKp_EgA06t0_IbFkc2c/exec"
+        webhook_url = "https://script.google.com/macros/s/AKfycbwJdS-eeUkZY9nFLrx6YEp_mCPgEhjU_THheXcPJrmFlEEIT6yd1Agd25Vt2JWyKjIH/exec"
 
 # เรียก Webhook Apps Script
         webhook_url = os.getenv("APPS_SCRIPT_WEBHOOK")
