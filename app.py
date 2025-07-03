@@ -124,9 +124,14 @@ def handle_message(event):
 
         # เรียก Apps Script Webhook สำหรับคัดลอกสูตรจากคอลัมน์ 11-14
         import requests
-        webhook_url = os.getenv("APPS_SCRIPT_WEBHOOK")  # ต้องตั้งค่าตัวแปรนี้ใน .env
+
+        webhook_url = os.getenv("APPS_SCRIPT_WEBHOOK")
         if webhook_url:
-            requests.post(webhook_url, json={"sheet": worksheet.title})
+            r = requests.post(webhook_url, json={"sheet": worksheet.title})
+        print("Webhook Response:", r.text)  # ตรวจสอบตรงนี้
+    except Exception as e:
+        print("Webhook Error:", e)
+
 
         confirmation_text = (
             f"✅ ลงทะเบียนสำเร็จ\n"
