@@ -129,7 +129,8 @@ def handle_message(event):
         webhook_url = os.getenv("APPS_SCRIPT_WEBHOOK")
         if webhook_url:
             try:
-                r = requests.post(webhook_url, json={"sheet": worksheet.title})
+                sheet_name = worksheet.title  # เช่น "DailyEmployee"
+                r = requests.post(webhook_url, json={"sheet": sheet_name})
                 print("Webhook Response:", r.text)
             except Exception as e:
                 print("Webhook Error:", e)
