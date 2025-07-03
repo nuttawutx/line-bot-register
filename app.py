@@ -123,14 +123,16 @@ def handle_message(event):
         now = datetime.now(tz).strftime("%d/%m/%Y %H:%M")
 
         worksheet.append_row(["", branch, emp_code, name, nickname, postion, start, emp_type, user_id, now])
+        import requests
 
-        # เรียก Apps Script Webhook สำหรับคัดลอกสูตรจากคอลัมน์ 11-14
-
+# เรียก Webhook Apps Script
         webhook_url = os.getenv("APPS_SCRIPT_WEBHOOK")
         if webhook_url:
-            r = requests.post(webhook_url, json={"sheet": worksheet.title})
- 
-
+            try:
+                r = requests.post(webhook_url, json={"sheet": worksheet.title})
+                print("Webhook Response:", r.text)
+            except Exception as e:
+                print("Webhook Error:", e)
 
         confirmation_text = (
             f"✅ ลงทะเบียนสำเร็จ\n"
