@@ -11,6 +11,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 from dotenv import load_dotenv
 from datetime import datetime
 import pytz
+import requests
+
 
 load_dotenv()
 
@@ -123,7 +125,6 @@ def handle_message(event):
         worksheet.append_row(["", branch, emp_code, name, nickname, postion, start, emp_type, user_id, now])
 
         # เรียก Apps Script Webhook สำหรับคัดลอกสูตรจากคอลัมน์ 11-14
-        import requests
 
         webhook_url = os.getenv("APPS_SCRIPT_WEBHOOK")
         if webhook_url:
