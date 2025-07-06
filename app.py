@@ -143,7 +143,7 @@ def handle_message(event):
             f"ตำแหน่งงาน: {postion}\n"
             f"สาขา: {branch}\n"
             f"วันเริ่มงาน: {start}\n"
-            f"📌 โปรดแจ้งหัวหน้างาน/พนักงาน ล่วงหน้าก่อนเริ่มงาน"
+            f"📌 โปรดแจ้งหัวหน้างาน/พนักงาน ล่วงหน้าก่อนเริ่มงาน.."
         )
         line_bot_api.reply_message(
             event.reply_token,
