@@ -101,7 +101,7 @@ def handle_message(event):
 
         if emp_type == "รายวัน":
             worksheet = client.open("HR_EmployeeList").worksheet("DailyEmployee")
-            default_code = 1000
+            default_code = 90000
         elif emp_type == "รายเดือน":
             worksheet = client.open("HR_EmployeeList").worksheet("MonthlyEmployee")
             default_code = 20000
