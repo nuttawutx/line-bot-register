@@ -42,7 +42,7 @@ def callback():
         abort(400)
     return 'OK'
 
-SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "TRUE").lower() == "TRUE"
+SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "true").lower() == "true"
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
