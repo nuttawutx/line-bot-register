@@ -42,7 +42,7 @@ def callback():
         abort(400)
     return 'OK'
 
-SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "true").lower() == "true"
+SYSTEM_ACTIVE = os.getenv("SYSTEM_ACTIVE", "TRUE").lower() == "TRUE"
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -121,7 +121,7 @@ def handle_message(event):
         tz = pytz.timezone('Asia/Bangkok')
         now = datetime.now(tz).strftime("%d/%m/%Y %H:%M")
 
-        worksheet.append_row(["", branch, emp_code, name, nickname, postion, start, emp_type, user_id, now])
+        worksheet.append_row(["", branch, emp_code, name, nickname, postion, start,"", emp_type, user_id, now])
         import requests
 
 
